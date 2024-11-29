@@ -1,0 +1,110 @@
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Portfolio App',
+      home: PortfolioPage(),
+    );
+  }
+}
+
+class PortfolioPage extends StatefulWidget {
+  @override
+  _PortfolioPageState createState() => _PortfolioPageState();
+}
+
+class _PortfolioPageState extends State<PortfolioPage> {
+  File? _image;
+  final TextEditingController _textController = TextEditingController();
+  bool _isFormVisible = false;
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+
+    if (result != null) {
+      setState(() {
+        _image = File(result.files.single.path!); 
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No image selected.')),
+      );
+    }
+  }
+
+  void _addWork() {
+    if (_textController.text.isNotEmpty && _image != null) {
+      print('New portfolio added: ${_textController.text}, ${_image!.path}');
+      _textController.clear();
+      setState(() {
+        _image = null;
+        _isFormVisible = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Portfolio')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isFormVisible = !_isFormVisible;
+                });
+              },
+              child: Text('Add Project'),
+            ),
+            if (_isFormVisible) ...[
+              SizedBox(height: 16),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: _image == null
+                      ? Center(child: Text('Tap to select photo'))
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            _image!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _textController,
+                decoration: InputDecoration(labelText: 'Project Description'),
+              ),
+              SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _addWork,
+                child: Text('Save Work'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
